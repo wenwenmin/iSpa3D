@@ -21,7 +21,7 @@ git clone https://github.com/wenwenmin/iSpa3D.git
 2. Create virtual environment:
 
 ```bash
-conda create --name ispa3d python=3.11
+conda create --name ispa3d python=3.10
 ```
 
 3. Activate virtual environment:
@@ -95,7 +95,6 @@ train:
   lr: 0.001                      # Learning rate
   # ... other training parameters
 
-seed: 3407
 ```
 
 ### 3. Execution

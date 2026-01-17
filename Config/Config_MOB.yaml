@@ -1,5 +1,5 @@
 data:
-  dataset: MF
+  dataset: MOB
   k_cutoff: 10
   top_genes: 2000
 mode: clustering

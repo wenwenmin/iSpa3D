@@ -8,7 +8,7 @@ iSpa3D is an interpretable deep learning framework designed to achieve high-fide
 
 ## Data
 
-All public datasets used in this paper are available at [Zenodo](https://zenodo.org/uploads/18012911).
+All public datasets used in this paper are available at [Zenodo](https://doi.org/10.5281/zenodo.18012911).
 
 ## Installation
 

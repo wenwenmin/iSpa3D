@@ -1,36 +1,74 @@
 # Baseline methods
 
-This directory contains 12 baseline methods for spatial domain identification and multi-slice integration, along with supporting alignment algorithms and helper modules. The existing source code and directory structure have been preserved. No baseline methods were run, and no algorithm code was modified as part of preparing this document.
+This directory provides 12 baseline methods, each with a Jupyter notebook demonstrating analysis of the DLPFC dataset. The descriptions below follow the workflows in these notebooks, including data preparation, model training, clustering, and evaluation. PASTE and `pytorch_revgrad` are supporting components and are not counted as baseline methods.
 
-## Method list
+## DLPFC examples
 
-| Method | Directory / main interface | Description |
+| Method | Example notebook | Workflow in the example |
 | --- | --- | --- |
-| CellCharter | `Cellcharter/cellcharter_DLPFC.ipynb` | Provides a DLPFC example using scVI embeddings, spatial neighborhood aggregation, and mclust clustering. Requires the external `cellcharter` package; its source is not included here. |
-| DeepST | `deepst/DeepST.py` (`run`) | Combines gene expression, spatial neighborhoods, and optional histology features to learn representations for spatial domain identification and batch integration. |
-| GraphST | `GraphST/GraphST.py` (`GraphST`) | Learns spatial representations with a graph encoder and contrastive learning. Also includes reference single-cell-to-spot mapping functionality. |
-| MENDER | `MENDER/MENDER.py` (`MENDER`, `MENDER_single`) | Constructs multi-scale neighborhood representations from cell-type labels and spatial coordinates for spatial domain identification. |
-| SEDR | `SEDR/SEDR_model.py` (`Sedr`) | Combines expression reconstruction and a variational graph autoencoder to learn representations, with optional deep embedded clustering and imputation support. |
-| SpaBatch | `SpaBatch/train.py` (`train_model`) | Learns representations from PCA features and spatial graphs using a variational graph autoencoder, masked reconstruction, and cross-batch triplet training. |
-| SpaCross | `SpaCross/Pipeline.py` (`SC_pipeline`, `SC_BC_pipeline`) | Provides graph-based representation learning pipelines with clustering-guided sampling, plus utilities for clustering and spot alignment. |
-| SPIRAL | `spiral/main.py` (`SPIRAL_integration`); `spiral/CoordAlignment.py` (`CoordAlignment`) | Provides spatial data integration with adversarial learning and a separate coordinate alignment interface. Uses the bundled `pytorch_revgrad` helper. |
-| STAGATE | `STAGATE_pyG/Train_STAGATE.py` (`train_STAGATE`) | Learns spatial embeddings using a graph attention autoencoder. Includes spatial graph construction and clustering utilities. |
-| STAligner | `STAligner/train_STAligner.py` (`train_STAligner`, `train_STAligner_subgraph`) | Integrates spatial slices using graph attention embeddings and mutual-nearest-neighbor triplet training. Includes ICP alignment utilities. |
-| STG3Net | `STG3Net/STNet.py` (`G3net`) | Learns multi-slice spatial representations with graph-based reconstruction, triplet learning, and an adversarial slice discriminator. Includes clustering and imputation modes. |
-| STitch3D | `STitch3D/model.py` (`Model`); `STitch3D/utils.py` | Provides slice alignment, preprocessing, and graph attention modeling with reference expression signatures for integrated representations and cell-type deconvolution. |
+| CellCharter | [cellcharter_DLPFC.ipynb](Cellcharter/cellcharter_DLPFC.ipynb) | Loads and combines Visium slices, trains scVI with `sample` as the batch key, constructs spatial neighbors within each slice, and aggregates three neighborhood layers with CellCharter. Clusters `X_cellcharter` with mclust and evaluates the spatial domains. Includes separate blocks for all three slice groups. |
+| DeepST | [DeepST_integration.ipynb](deepst/DeepST_integration.ipynb) | Loads Visium slices and histology images, extracts image crops, augments expression, constructs spatial graphs, and trains DeepST with `task="Integration"`. Clusters `DeepST_embed` and visualizes the refined labels in `DeepST_refine_domain`. Contains three DLPFC group blocks, followed by a separate MERFISH example. |
+| GraphST | [GraphST_DLPFC.ipynb](GraphST/GraphST_DLPFC.ipynb) | Reads prepared expression, label, and coordinate files together with PASTE-aligned 3D coordinates. Trains GraphST on the combined AnnData object, clusters the `emb` representation with mclust, and computes overall and per-slice metrics. The selected slices are `151673`–`151676`. |
+| MENDER | [MENDER_DLPFC.ipynb](MENDER/MENDER_DLPFC.ipynb) | Loads Visium slices, normalizes expression, applies PCA and Harmony, and uses Leiden clusters as cell states in `ct`. Builds three-scale neighborhood representations with `nn_mode='ring'`, clusters the resulting spatial contexts, and saves `msm.adata_MENDER` with domain labels in `MENDER`. Includes separate blocks for all three groups. |
+| SEDR | [SEDR_DLPFC.ipynb](SEDR/SEDR_DLPFC.ipynb) | Constructs per-slice spatial graphs with `k=12`, combines slices, selects 2,000 highly variable genes, and computes 200 PCA components. Trains SEDR with DEC, applies Harmony to the latent representation, and clusters `SEDR.Harmony` with mclust. Includes separate blocks for all three groups. |
+| SpaBatch | [Run_DLPFC_151507.ipynb](SpaBatch/Run_DLPFC_151507.ipynb) | Builds per-slice KNN graphs with `k_cutoff=8`, combines expression and graphs, selects 2,000 highly variable genes, and computes 200 PCA components. Trains SpaBatch with DEC and clusters `SpaBatch` with mclust. Despite the filename, the current slice list is `151669`–`151672`, with five clusters. |
+| SpaCross | [Visium10x_DLPFC_Multi.ipynb](SpaCross/Visium10x_DLPFC_Multi.ipynb) | Preprocesses each Visium slice with 5,000 highly variable genes, aligns slices with ICP, constructs a 3D KNN graph, and computes 200 PCA components. Runs `SC_pipeline` through `net.trian()`, stores `latent` and `recon`, and clusters the latent representation with mclust. Uses `151673`–`151676` and reports per-slice ARI, ACC, and DIS. |
+| SPIRAL | [Spiral_DLPFC.ipynb](spiral/Spiral_DLPFC.ipynb) | Reads prepared expression, KNN edge, label, and coordinate files for `151669`–`151672`, then trains `SPIRAL_integration`. Exports embeddings and corrected expression, removes the noise dimensions from the embedding, and clusters the remaining `spiral` representation with mclust. Input-generation code is provided in commented cells. |
+| STAGATE | [STAGATE_DLPFC.ipynb](STAGATE_pyG/STAGATE_DLPFC.ipynb) | Constructs a spatial network for each slice with `rad_cutoff=150`, combines the slices and their networks, selects 3,000 highly variable genes, normalizes and log-transforms expression, and trains STAGATE. Clusters `STAGATE` with mclust and visualizes spatial domains and UMAP. The current group is `151673`–`151676`. |
+| STAligner | [STAligner_DLPFC.ipynb](STAligner/STAligner_DLPFC.ipynb) | Constructs per-slice spatial networks with `rad_cutoff=150`, selects 5,000 highly variable genes per slice, and combines the networks into a block-diagonal graph. Trains STAligner with `knn_neigh=50`, clusters `STAligner` with mclust, and evaluates the integrated domains. Includes separate blocks for the three slice groups. |
+| STG3Net | [Run_DLPFC.ipynb](STG3Net/Run_DLPFC.ipynb) | Loads configuration from YAML, builds and combines per-slice spatial graphs, selects highly variable genes, and computes 200 PCA components. Trains `G3net`, stores `latent` and `recon`, clusters `latent` with mclust, and evaluates the domains. The current slice list is `151507`–`151510`, with seven clusters. |
+| STitch3D | [STitch3D_DLPFC.ipynb](STitch3D/STitch3D_DLPFC.ipynb) | Loads four Visium slices and an additional single-cell reference, aligns the slices, and preprocesses them with slice distances `[10., 300., 10.]`. Trains STitch3D to obtain integrated representations and cell-type deconvolution results, then fits a seven-component Gaussian mixture to `latent` and stores reordered domain labels in `Cluster`. Uses `151507`–`151510`. |
+
+## Data preparation
+
+The notebooks use the following DLPFC slice groups. Many examples use seven domains for the first and third groups and five for the second; MENDER also includes clustering by resolution. Check the settings in the selected notebook block when switching groups.
+
+| Slice group | Slice IDs | Common domain count |
+| --- | --- | --- |
+| Group 1 | `151507`, `151508`, `151509`, `151510` | 7 |
+| Group 2 | `151669`, `151670`, `151671`, `151672` | 5 |
+| Group 3 | `151673`, `151674`, `151675`, `151676` | 7 |
+
+Most examples load Visium data from `C:\Code\Data\DLPFC`. Each slice folder needs its expression matrix and `spatial/` resources; many loaders explicitly read `filtered_feature_bc_matrix.h5`. Annotation formats differ between examples:
+
+- CellCharter, MENDER, STAGATE, and STAligner read `<slice>/gt/tissue_positions_list_GTs.txt` and store the annotation in `original_clusters`.
+- SEDR, SpaBatch, STG3Net, and SpaCross read `<slice>/<slice>_truth.txt` and store the annotation in `layer_guess`.
+- DeepST's evaluation cells expect `original_clusters`; annotation loading in the bundled Visium reader is commented out, so populate this column before running evaluation.
+- GraphST and SPIRAL read prepared files from `gtt_input_scanpy/`, including `*_features-1.txt`, `*_label-1.txt`, and `*_positions-1.txt`. SPIRAL also reads `*_edge_KNN_6.csv`. Their preparation cells are commented out and must be enabled or the files supplied beforehand.
+- GraphST additionally reads `methods/paste_new_coord_<slice1>_<slice2>_<slice3>_<slice4>.csv`, with aligned `x`, `y`, and `z` coordinates indexed by spot name.
+- STitch3D reads `barcode_level_layer_map.tsv` for spatial annotations and the reference files `GSE144136_GeneBarcodeMatrix_Annotated.mtx`, `GSE144136_CellNames.csv`, and `GSE144136_GeneNames.csv`. The example retains reference cells with condition `Control`.
+
+## Running a notebook
+
+1. Choose a notebook from the table and select the DLPFC slice group to analyze. For notebooks with repeated donor blocks, run the imports and helper definitions, then the relevant block. In `DeepST_integration.ipynb`, the later MERFISH cells are a separate example; `MBA_MBP.ipynb` is a mouse-brain example.
+2. Update data paths, slice lists, cluster settings, and output paths. Many examples write results to `C:\Code\Answer\DLPFC`; ensure the selected output directory exists and use a distinct filename for each group.
+3. Make local modules available to the notebook kernel. Most examples use imports such as `import STAligner` or `from STG3Net import Metrics`, so add this repository's `Baseline/` directory to the Python search path before those imports:
+
+   ```python
+   import sys
+   sys.path.insert(0, r"C:\Code\iSpa3D-1\Baseline")
+   ```
+
+   DeepST also requires `C:\Code\iSpa3D-1\Baseline\deepst` on the search path for `from DeepST import run` and its local imports.
+
+4. Review YAML paths where used. STG3Net's notebook reads `../Config/Config_DLPFC.yaml`; the repository copy is at `Config/Config_DLPFC.yaml` relative to the project root, so adjust the path for the kernel's working directory. SpaCross reads `../Config/DLPFC.yaml`, which is not included in the current repository; supply the configuration expected by that pipeline before running it.
+5. Run the selected block's preprocessing, training, clustering, visualization, evaluation, and export cells in order. For example, open the STAligner notebook from the project root with:
+
+   ```powershell
+   jupyter notebook Baseline/STAligner/STAligner_DLPFC.ipynb
+   ```
+
+The project-level `requirements.txt` lists shared packages. CellCharter additionally imports the external `cellcharter` package. Examples using mclust require R, `rpy2`, and the R package `mclust`. Review the hard-coded `R_HOME`, `R_USER`, and CUDA settings in both notebooks and imported modules for the local environment. SPIRAL's embedding-export cells explicitly call `.cuda()`.
+
+## Results and evaluation
+
+The notebooks demonstrate spatial domain plots, UMAP visualizations, and method-specific exports. Many calculate overall and per-slice ARI, NMI, HOM, COM, CHAOS, PAS, and LISI-based scores; the available metrics and label columns differ by notebook. Several reuse `STG3Net.Metrics` for evaluation.
+
+Most examples export `.h5ad` files containing representations and associated metadata. SPIRAL also exports embedding, corrected-expression, and cluster CSV files; DeepST saves visualization PDFs; STitch3D's `model.eval(..., save=True)` exports model results. GraphST's current `.h5ad` export cell precedes clustering, so run an additional save after clustering if the file should include the predicted domains. Review group names in export cells because some filenames are reused across blocks.
 
 ## Supporting algorithms and modules
 
-The `paste/` directory provides PASTE, an alignment algorithm required by other baseline methods. Its main interfaces, `pairwise_align` and `center_align`, are implemented in `paste/PASTE.py` and align spatial transcriptomics slices using fused Gromov-Wasserstein optimal transport. It requires `POT` (imported as `ot`) and is not counted as a baseline method.
+- `paste/` provides PASTE, an alignment algorithm required by other baseline methods. Its `pairwise_align` and `center_align` interfaces are implemented in `paste/PASTE.py`, and it requires `POT` (imported as `ot`). PASTE is not a separate baseline in this comparison; GraphST's example consumes prepared PASTE-aligned coordinates.
+- `pytorch_revgrad/` provides the gradient-reversal helper used by SPIRAL.
 
-The `pytorch_revgrad/` directory is a gradient-reversal helper used by SPIRAL, rather than a separate baseline method.
-
-## Usage notes
-
-The project-level `requirements.txt` lists shared dependencies, but it is not a verified environment specification for every baseline. Some methods require additional third-party packages, such as `cellcharter`. Dependencies were not installed or checked by executing the methods when preparing this document.
-
-Most methods expose Python classes or functions rather than a unified command-line entry point. Inputs differ between methods: many use AnnData objects with spatial coordinates in `adata.obsm['spatial']`, while some also require PCA features, precomputed graphs, batch or slice labels, or reference expression signatures. SPIRAL's integration interface accepts feature, edge, and metadata files. Refer to each interface for its exact parameters and preprocessing requirements.
-
-Import paths are not uniform. Modules using relative imports can be imported through `Baseline.*` from the project root, `C:\Code\iSpa3D-1`. MENDER, SpaBatch, and STitch3D also use top-level imports such as `MENDER.utils`, `SpaBatch.model`, and `STitch3D.networks`, so the `Baseline/` directory must be on Python's module search path for those imports to resolve. SPIRAL likewise requires `Baseline/` on the search path to find `pytorch_revgrad`. DeepST uses bare local imports such as `utils_func`, `model`, and `trainer`, so its own `Baseline/deepst/` directory must be available on the search path.
-
-Several clustering utilities use `rpy2` and the R package `mclust`, which requires a separate R installation. Some files and the CellCharter notebook contain machine-specific R, data, or output paths; review these before use. The CellCharter notebook also imports `STG3Net.Metrics`, which requires `Baseline/` on the search path.
+This document was prepared by inspecting the notebook code and relevant local modules. The notebooks were not rerun, and no algorithm code or notebook content was modified.

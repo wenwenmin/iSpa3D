@@ -29,14 +29,7 @@ The notebooks use the following DLPFC slice groups. Many examples use seven doma
 | Group 2 | `151669`, `151670`, `151671`, `151672` | 5 |
 | Group 3 | `151673`, `151674`, `151675`, `151676` | 7 |
 
-Most examples load Visium data from `C:\Code\Data\DLPFC`. Each slice folder needs its expression matrix and `spatial/` resources; many loaders explicitly read `filtered_feature_bc_matrix.h5`. Annotation formats differ between examples:
-
-- CellCharter, MENDER, STAGATE, and STAligner read `<slice>/gt/tissue_positions_list_GTs.txt` and store the annotation in `original_clusters`.
-- SEDR, SpaBatch, STG3Net, and SpaCross read `<slice>/<slice>_truth.txt` and store the annotation in `layer_guess`.
-- DeepST's evaluation cells expect `original_clusters`; annotation loading in the bundled Visium reader is commented out, so populate this column before running evaluation.
-- GraphST and SPIRAL read prepared files from `gtt_input_scanpy/`, including `*_features-1.txt`, `*_label-1.txt`, and `*_positions-1.txt`. SPIRAL also reads `*_edge_KNN_6.csv`. Their preparation cells are commented out and must be enabled or the files supplied beforehand.
-- GraphST additionally reads `methods/paste_new_coord_<slice1>_<slice2>_<slice3>_<slice4>.csv`, with aligned `x`, `y`, and `z` coordinates indexed by spot name.
-- STitch3D reads `barcode_level_layer_map.tsv` for spatial annotations and the reference files `GSE144136_GeneBarcodeMatrix_Annotated.mtx`, `GSE144136_CellNames.csv`, and `GSE144136_GeneNames.csv`. The example retains reference cells with condition `Control`.
+Most examples load Visium data from `C:\Code\Data\DLPFC`. Each slice folder needs its expression matrix and `spatial/` resources; many loaders explicitly read `filtered_feature_bc_matrix.h5`. 
 
 ## Running a notebook
 
@@ -49,26 +42,8 @@ Most examples load Visium data from `C:\Code\Data\DLPFC`. Each slice folder need
    sys.path.insert(0, r"C:\Code\iSpa3D-1\Baseline")
    ```
 
-   DeepST also requires `C:\Code\iSpa3D-1\Baseline\deepst` on the search path for `from DeepST import run` and its local imports.
-
-4. Review YAML paths where used. STG3Net's notebook reads `../Config/Config_DLPFC.yaml`; the repository copy is at `Config/Config_DLPFC.yaml` relative to the project root, so adjust the path for the kernel's working directory. SpaCross reads `../Config/DLPFC.yaml`, which is not included in the current repository; supply the configuration expected by that pipeline before running it.
-5. Run the selected block's preprocessing, training, clustering, visualization, evaluation, and export cells in order. For example, open the STAligner notebook from the project root with:
-
-   ```powershell
-   jupyter notebook Baseline/STAligner/STAligner_DLPFC.ipynb
-   ```
-
 The project-level `requirements.txt` lists shared packages. CellCharter additionally imports the external `cellcharter` package. Examples using mclust require R, `rpy2`, and the R package `mclust`. Review the hard-coded `R_HOME`, `R_USER`, and CUDA settings in both notebooks and imported modules for the local environment. SPIRAL's embedding-export cells explicitly call `.cuda()`.
 
 ## Results and evaluation
 
-The notebooks demonstrate spatial domain plots, UMAP visualizations, and method-specific exports. Many calculate overall and per-slice ARI, NMI, HOM, COM, CHAOS, PAS, and LISI-based scores; the available metrics and label columns differ by notebook. Several reuse `STG3Net.Metrics` for evaluation.
-
-Most examples export `.h5ad` files containing representations and associated metadata. SPIRAL also exports embedding, corrected-expression, and cluster CSV files; DeepST saves visualization PDFs; STitch3D's `model.eval(..., save=True)` exports model results. GraphST's current `.h5ad` export cell precedes clustering, so run an additional save after clustering if the file should include the predicted domains. Review group names in export cells because some filenames are reused across blocks.
-
-## Supporting algorithms and modules
-
-- `paste/` provides PASTE, an alignment algorithm required by other baseline methods. Its `pairwise_align` and `center_align` interfaces are implemented in `paste/PASTE.py`, and it requires `POT` (imported as `ot`). PASTE is not a separate baseline in this comparison; GraphST's example consumes prepared PASTE-aligned coordinates.
-- `pytorch_revgrad/` provides the gradient-reversal helper used by SPIRAL.
-
-This document was prepared by inspecting the notebook code and relevant local modules. The notebooks were not rerun, and no algorithm code or notebook content was modified.
+The notebooks demonstrate spatial domain plots, UMAP visualizations, and method-specific exports. Many calculate overall and per-slice ARI, NMI, HOM, COM, CHAOS, PAS, and LISI-based scores.
